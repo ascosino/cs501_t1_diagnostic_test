@@ -22,7 +22,8 @@ class RegisterAPI(MethodView):
 
     def post(self):
         # get the post data
-        post_data = request.get_json(); print(request)
+        post_data = request.get_json(); 
+        print(post_data)
         # check if user already exists
         user = User.query.filter_by(email=post_data.get('email')).first()
         if not user:
@@ -35,8 +36,10 @@ class RegisterAPI(MethodView):
                 # insert the user
                 db.session.add(user)
                 db.session.commit()
+                print(user.id)
                 # generate the auth token
                 auth_token = user.encode_auth_token(user.id)
+                print(auth_token.decode())
                 responseObject = {
                     'status': 'success',
                     'message': 'Successfully registered.',
@@ -56,6 +59,11 @@ class RegisterAPI(MethodView):
             }
             return make_response(jsonify(responseObject)), 202
 
+class ListAPI(MethodView):
+    def get(self):
+        all_users = User.query.all()
+        responseObject = [user.email for user in all_users]
+        return make_response(jsonify(responseObject)), 201
 
 # define the API resources
 registration_view = RegisterAPI.as_view('register_api')
@@ -65,4 +73,14 @@ auth_blueprint.add_url_rule(
     '/auth/register',
     view_func=registration_view,
     methods=['POST', 'GET']
+)
+
+# get list API resources
+list_view = ListAPI.as_view('list_api')
+
+# add Rules for API Endpoints
+auth_blueprint.add_url_rule(
+    '/users/index',
+    view_func=list_view,
+    methods=['GET']
 )
